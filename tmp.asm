@@ -263,7 +263,7 @@ CODESEG
                 call draw_model
 
         moved:
-
+            ;reseting the deltas
             mov [deltax], 0
             mov [deltay], 0
 
@@ -290,13 +290,16 @@ CODESEG
         cmp [jumpstep], 0
         je finished_jump
         
+        ;to make the look of a jump
         cmp [jumpclock], 0FFh
         jne finished_jump
         
+        ;reseting the clock
         mov [jumpclock], 00h
 
         mid_jump:
 
+            ;jump hight
             mov [deltaY], 0Dh
             mov ax, [deltay]
 
@@ -317,6 +320,7 @@ CODESEG
                 dec [jumpstep]
 
         finished_jump:
+            ;incrementing the clock
             inc [jumpclock]
             ret
 
