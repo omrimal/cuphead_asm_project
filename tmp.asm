@@ -18,13 +18,18 @@ STACK 1000h
 
 DATASEG
     
-    clock dw 0d
-    currX dw 160d
-    currY dw 50d 
+    clock dw 0h
 
+    deltaX dw 0h
+    deltaY dw 0h
+
+    currX dw 210d
+    currY dw 45d 
+
+    jumpClock db 0FFh
     currModel dw ?
 
-    jumpStep db 00h  
+    jumpStep dw 00h  
     
     struc gameObject
 
@@ -97,6 +102,15 @@ CODESEG
         mov ax, [currX]       
         mov dx, [currY]
         lea bx, [flowerBossOne]
+        
+        call draw_model
+
+        mov [currx], 120
+        mov [curry], 126
+
+        mov ax, [currX]       
+        mov dx, [currY]
+        lea bx, [cupheadModelStand]
 
         mov [currmodel], bx
         
@@ -104,28 +118,29 @@ CODESEG
                 
         move:
             inc [clock]
+            call update_jump_state   
 
             mov ah,06h
             mov dl,0FFh
             int 21h 
             
             ; Check if a key was pressed
-            jz not_pressed 
+            ;jz not_pressed 
             
             mov [clock], 0
 
-            ; If a key was pressed, we can use its value       
+            ; If a key was pressed, we can use its value    
             call move_charecter
-            jmp move
+            ;jmp move
             
             not_pressed:
 
-                cmp [clock], 0fffh
+                cmp [clock], 0FFFh
                 jne move
 
                 mov [clock], 0
-                ;call update_model
-                                
+                call update_model
+
         jmp move
                         
         ;returning control to the os  
@@ -146,48 +161,36 @@ CODESEG
 
     endp setup_video_mode
 
-            
     ;al - charecter pressed
             
     proc move_charecter
-    
-        ;mov ah, 2
-        ;mov dl, al
-        ;int 21h
 
-        ;mov dl, 10
-        ;int 21h
-
-        ;move up  
+        ;jump  
         cmp al, 'w'
-        je move_up
+        je jump
                     
         ;move left
         cmp al, 'a'
         je move_left
         
-        ;move down
-        cmp al, 's'
-        je move_down
-        
         ;move right
         cmp al, 'd'
         je move_right
         
-        ;jump (spacebar)
+        ;jump (spacebar) -> shoot 
         cmp al, 32          
         
-        ;call update_jump_state:
+        ;if neither of the keys above were pressed 
+        cmp [deltax], 0 
+        jne check_deltas
+
+        cmp [deltaY], 0 
+        jne check_deltas
         
-        ;if none of the keys above were pressed  
-        jmp moved 
+        jmp moved
         
-        move_up:
-            dec [currY]
-            jmp draw_at_new_location
-    
-        move_down:
-            inc [currY]
+        jump:
+            call initiate_jump
             jmp draw_at_new_location
         
         move_left:
@@ -205,9 +208,6 @@ CODESEG
             cmp [currX], 0
             jl  X_too_small
             
-            cmp [currY], WINDOW_HIGHT - 26
-            jg  Y_too_big
-            
             cmp [currX], WINDOW_LENGTH - 20
             jg  X_too_big
             
@@ -223,14 +223,18 @@ CODESEG
                     inc [currX]
                     jmp moved
                     
-                Y_too_big:
-                    dec [currY]
-                    jmp moved
-                    
                 X_too_big:
                     dec [currX]
                     jmp moved
             
+            check_deltas:
+
+                cmp [deltax], 0
+                jne delete_previos
+                
+                cmp [deltay], 0
+                je moved
+
             ;to remve the last model drawing                          
             delete_previos:
 
@@ -254,30 +258,73 @@ CODESEG
                     
                 mov ax, [currX]       
                 mov dx, [currY]
-                lea bx, [cupheadModelStand]
+                lea bx, [currmodel]
                                     
                 call draw_model
-                
-                jmp moved
-        
-        ;ajusting the x, y values
-        ;according to the key pressed                  
-        
-            
-        jump:
-        
-            
+
         moved:
-            
+            ;reseting the deltas
+            mov [deltax], 0
+            mov [deltay], 0
+
             ret
 
     endp move_charecter 
 
-    ;proc update_jump_state:
+    proc initiate_jump
+
+        cmp [jumpstep], 0
+        jne already_jumping
+
+        ; initial jump delta
+        mov [deltaY], 0Dh
+        mov [jumpstep], 06h
+
+        already_jumping:
+            ret
+
+    endp initiate_jump
+
+    proc update_jump_state
         
+        cmp [jumpstep], 0
+        je finished_jump
         
-    ;    ret
-    ;endp update_jump_state:  
+        ;to make the look of a jump
+        cmp [jumpclock], 0FFh
+        jne finished_jump
+        
+        ;reseting the clock
+        mov [jumpclock], 00h
+
+        mid_jump:
+
+            ;jump hight
+            mov [deltaY], 0Dh
+            mov ax, [deltay]
+
+            cmp [jumpstep], 03h
+            jbe in_way_down
+
+            ; each time dec by 10 px (going up)
+            sub [curry], ax
+            
+            jmp dec_state
+
+            in_way_down:
+
+                ; each time inc by 10 px (going down)
+                add [curry], ax
+                
+            dec_state:
+                dec [jumpstep]
+
+        finished_jump:
+            ;incrementing the clock
+            inc [jumpclock]
+            ret
+
+    endp update_jump_state
 
     proc update_model
 
@@ -319,148 +366,6 @@ CODESEG
 
     endp update_model
     
-    ;ax - x value
-    ;dx - y value
-    ;bx - pointer to the array
-
-    proc draw_model
-        
-        push bp
-        mov bp, sp                      ;creating stack frame
-        
-        sub sp, 2                       ;for two veriables of 2 bytes each
-        mov [bp - 2], ax                ;saving the x value for the loop    
-
-            
-        run_on_model_rows:
-            
-            mov ax, [bp - 2]            ;resetting the x (coloum) value
-            
-            color_model_colum:
-                
-                cmp [byte ptr bx], 11h
-
-                je advance_a_pixel        
-                
-                push ax                 ;saving the x value in the stack
-                
-                mov cx, ax              ;setting the x value
-                mov ah, 0Ch             ;change pixel color service
-                mov al, [bx]            ;setting the color
-                
-                int 10h                 
-                    
-                pop ax                  ;restoring ax
-                
-                advance_a_pixel:
-                    inc ax              ;incrementing ax
-                    inc bx              ;incrementing bx
-                
-                    ;checking if we got to the end of the row
-                    cmp [byte ptr bx], 10h
-                
-                jne color_model_colum                 
-            
-            inc dx                      ;moving to the next row
-            inc bx                      ;moving to the next element in the array
-            
-            ;checking if we got to the end of the array
-            cmp [byte ptr bx], '$'
-
-            jne run_on_model_rows
-                                
-        mov sp, bp
-        pop bp
-        
-        ret
-        
-    endp draw_model
-
-
-    ;bl - color
-    ;push length
-    ;push hight
-    ;push y
-    ;push x
-            
-    proc draw_rectangle
-            
-        ;to not destroy the registers's values    
-        push ax                         
-        push bx
-        push cx
-        push dx
-        push bp
-        
-        mov bp, sp                      ;pointing to the start of the stack frame
-        sub sp, 04h                
-        
-        mov cl, [BP + HIGHT_OFF]
-
-        cmp cl, 0
-        je func_end                     ;if the given hight is 0            
-
-        mov cl, [BP + LENGTH_OFF] 
-
-        cmp cl, 0
-        je func_end                     ;if the given length is 0
-                    
-        
-        mov ah, 0Ch                     ;for pixel color change       
-        mov al, bl                      ;using the color black   
-        
-        mov bx, [bp + Y_OFF]            ;getting the Y position  
-        mov [bp - ROW_OFF], bx          ;updating the starting row
-        
-        mov bx, [bp + X_OFF]            ;getting the X position
-        
-        run_on_rows:
-            
-            mov [bp - COL_OFF], bx      ;resetting the x value
-            mov dx, [bp - ROW_OFF]      ;updating the starting row
-                        
-            color_colum: 
-                        
-                mov cx, [bp - COL_OFF]
-                
-                int 10h
-                
-                ;'advancing' to the next colum    
-                inc [word ptr bp - COL_OFF]                                       
-                                                            
-                ;checking if we got to the end of the cloums                        
-                mov cx, [bp + LENGTH_OFF]
-                add cx, [bp + X_OFF] 
-                sub cx, [bp - COL_OFF] 
-                inc cx
-                
-            loop color_colum              
-            
-            ;'advancing' to the next row 
-            inc [byte ptr bp - ROW_OFF]
-            
-            ;checking if we got the the end of the rows              
-            mov cx, [bp + HIGHT_OFF]
-            add cx, [bp + Y_OFF] 
-            sub cx, [bp - ROW_OFF] 
-            inc cx
-            
-        
-        loop run_on_rows 
-        
-        func_end:
-        
-            mov sp,bp                   ;restoring sp
-            pop bp                      ;restoring bp
-            
-            ;restoring the registres we changed in the function
-            pop dx
-            pop cx
-            pop bx
-            pop ax              
-                
-            ret 8
-            
-    endp draw_rectangle
+    include "draw.asm"
 
     end main
