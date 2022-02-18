@@ -18,10 +18,15 @@ STACK 1000h
 
 DATASEG
     
-    clock dw 0d
+    clock dw 0h
+
+    deltaX dw 0h
+    deltaY dw 0h
+
     currX dw 210d
     currY dw 45d 
 
+    jumpClock db 0FFh
     currModel dw ?
 
     jumpStep dw 00h  
@@ -130,7 +135,7 @@ CODESEG
             
             not_pressed:
 
-                cmp [clock], 0fffh
+                cmp [clock], 0FFFh
                 jne move
 
                 mov [clock], 0
@@ -156,7 +161,6 @@ CODESEG
 
     endp setup_video_mode
 
-            
     ;al - charecter pressed
             
     proc move_charecter
@@ -176,8 +180,14 @@ CODESEG
         ;jump (spacebar) -> shoot 
         cmp al, 32          
         
-        ;if none of the keys above were pressed  
-        jmp delete_previos 
+        ;if neither of the keys above were pressed 
+        cmp [deltax], 0 
+        jne check_deltas
+
+        cmp [deltaY], 0 
+        jne check_deltas
+        
+        jmp moved
         
         jump:
             call initiate_jump
@@ -217,6 +227,14 @@ CODESEG
                     dec [currX]
                     jmp moved
             
+            check_deltas:
+
+                cmp [deltax], 0
+                jne delete_previos
+                
+                cmp [deltay], 0
+                je moved
+
             ;to remve the last model drawing                          
             delete_previos:
 
@@ -243,14 +261,12 @@ CODESEG
                 lea bx, [currmodel]
                                     
                 call draw_model
-                
-                jmp moved
-        
-        ;ajusting the x, y values
-        ;according to the key pressed                  
-            
+
         moved:
-            
+
+            mov [deltax], 0
+            mov [deltay], 0
+
             ret
 
     endp move_charecter 
@@ -261,6 +277,7 @@ CODESEG
         jne already_jumping
 
         ; initial jump delta
+        mov [deltaY], 0Dh
         mov [jumpstep], 06h
 
         already_jumping:
@@ -272,27 +289,35 @@ CODESEG
         
         cmp [jumpstep], 0
         je finished_jump
+        
+        cmp [jumpclock], 0FFh
+        jne finished_jump
+        
+        mov [jumpclock], 00h
 
         mid_jump:
+
+            mov [deltaY], 0Dh
+            mov ax, [deltay]
 
             cmp [jumpstep], 03h
             jbe in_way_down
 
-            ; each time dec by 2 (going up)
-            sub [curry], 0Ah
+            ; each time dec by 10 px (going up)
+            sub [curry], ax
             
             jmp dec_state
 
             in_way_down:
 
-                ; each time inc by 2 (going down)
-                mov ax, [jumpstep]
-                add [curry], 0Ah
+                ; each time inc by 10 px (going down)
+                add [curry], ax
                 
             dec_state:
                 dec [jumpstep]
 
         finished_jump:
+            inc [jumpclock]
             ret
 
     endp update_jump_state
@@ -337,6 +362,6 @@ CODESEG
 
     endp update_model
     
-    include "drawing_funcs.asm"
+    include "draw.asm"
 
     end main
