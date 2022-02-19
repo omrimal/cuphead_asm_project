@@ -25,16 +25,32 @@ Drawing order:
 --------------
 	save a copy of the map without moving models such as:
 
-	- hp
+	- HP
 	- bosses
 	- player
 	- projectiles
 
 	when we move a model, we take a rectangle from the background first,
 	draw it at the old location, and then drawing the model at the new location.
+	to make models not delete each other we first clear the background and then 
+	starting to draw all the models.
 
-	the models draw order priority is (lowest to highest):
+	to reset the background:
+
+		we look at the bounding box
+		of each model, and for each pixel
+		checking the pixel range:
+
+		- if 0 <= y < 150   --> the pixel should be Light Cyan.
+		- if 150 <= y < 155 --> the pixel should be Light Green.
+		- if 155 <= y < 200 --> the pixel should be Brown.
+
+		** the x value does not matter.
+
+	after we do that, we can draw al the models.
+	the models draw priority is (lowest to highest):
 	
 	1. bosses
 	2. player
 	3. projectiles
+	4. HP
