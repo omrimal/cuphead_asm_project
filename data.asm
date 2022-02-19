@@ -1,3 +1,7 @@
+peaShooterRight     db 11h, 11h, 11h, 01h, 01h, 09h, 09h, 09h, 09h, 10h
+                    db 01h, 01h, 01h, 09h, 09h, 0Bh, 0Fh, 0Fh, 0Bh, 09h, 10h
+                    db 11h, 11h, 09h, 01h, 01h, 09h, 09h, 09h, 09h, 10h, '$'
+
 cupheadModelStand   db 11h, 0Fh, 0Fh, 0Ch, 10h
                     db 11h, 0Fh, 0Fh, 0Ch, 0Ch, 0Ch, 0Fh, 10h
                     db 11h, 0Fh, 0Fh, 0Ch, 0Ch, 0Fh, 0Fh, 0Fh, 10h
