@@ -1,3 +1,41 @@
+;will get the background
+;color of a pixel
+
+;push y value
+
+proc get_background_pixel
+
+    push bp
+    mov bp, sp
+
+    cmp [word ptr bp + 4], 96h
+    jl sky_pixel
+     
+    cmp [word ptr bp + 4], 9bh
+    jge under_ground_pixel
+
+    jmp ground_pixel
+
+    sky_pixel:
+        mov al, 0Bh
+        jmp got_color
+
+    ground_pixel:
+        mov al, 0Ah
+        jmp got_color
+
+    under_ground_pixel:
+        mov al, 06h
+
+    got_color:
+    
+        mov sp, bp
+        pop bp
+
+        ret 2
+
+endp get_background_pixel
+
 ;ax - x value
 ;dx - y value
 ;bx - pointer to the array
@@ -57,45 +95,44 @@ endp draw_model
 
 
 ;bl - color
+;bh - background or not
+
 ;push length
 ;push hight
 ;push y
 ;push x
         
 proc draw_rectangle
-        
-    ;to not destroy the registers's values    
-    push ax                         
-    push bx
-    push cx
-    push dx
+
     push bp
     
     mov bp, sp                      ;pointing to the start of the stack frame
-    sub sp, 04h                
+    sub sp, 06h                
     
-    mov cl, [BP + HIGHT_OFF]
+    mov cx, [bP + HIGHT_OFF]
 
-    cmp cl, 0
+    cmp cx, 0
     je func_end                     ;if the given hight is 0            
 
-    mov cl, [BP + LENGTH_OFF] 
+    mov cx, [bP + LENGTH_OFF] 
 
-    cmp cl, 0
+    cmp cx, 0
     je func_end                     ;if the given length is 0
-                
-    
+
     mov ah, 0Ch                     ;for pixel color change       
-    mov al, bl                      ;using the color black   
+    mov al, bl                      ;using the color in bl 
+    mov [bp - MODE_OFF], bh
     
     mov bx, [bp + Y_OFF]            ;getting the Y position  
     mov [bp - ROW_OFF], bx          ;updating the starting row
     
-    mov bx, [bp + X_OFF]            ;getting the X position
-    
     run_on_rows:
         
+        push bx
+        mov bx, [bp + X_OFF]        ;getting the X position
         mov [bp - COL_OFF], bx      ;resetting the x value
+        pop bx
+
         mov dx, [bp - ROW_OFF]      ;updating the starting row
                     
         color_colum: 
@@ -104,6 +141,15 @@ proc draw_rectangle
             
             int 10h
             
+            cmp [byte ptr bp - MODE_OFF], 0
+            jne same_color
+            
+            ;getting the current color
+            push dx
+            call get_background_pixel
+            
+            same_color:
+
             ;'advancing' to the next colum    
             inc [word ptr bp - COL_OFF]                                       
                                                         
@@ -123,20 +169,13 @@ proc draw_rectangle
         add cx, [bp + Y_OFF] 
         sub cx, [bp - ROW_OFF] 
         inc cx
-        
     
     loop run_on_rows 
     
     func_end:
     
         mov sp,bp                   ;restoring sp
-        pop bp                      ;restoring bp
-        
-        ;restoring the registres we changed in the function
-        pop dx
-        pop cx
-        pop bx
-        pop ax              
+        pop bp                      ;restoring bp            
             
         ret 8
         

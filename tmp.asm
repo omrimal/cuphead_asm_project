@@ -2,16 +2,17 @@ IDEAL
 
 MODEL SMALL 
 
-STACK 1000h
+STACK 100h
 
-    X_OFF         EQU  12
-    Y_OFF         EQU  14 
+    X_OFF         EQU   4
+    Y_OFF         EQU   6
 
-    ROW_OFF       EQU   2
-    COL_OFF       EQU   4
+    ROW_OFF       EQU   4
+    COL_OFF       EQU   6
+    MODE_OFF      EQU   2
 
-    HIGHT_OFF     EQU  16
-    LENGTH_OFF    EQU  18
+    HIGHT_OFF     EQU   8
+    LENGTH_OFF    EQU  10
             
     WINDOW_HIGHT  EQU 200 
     WINDOW_LENGTH EQU 320
@@ -40,6 +41,10 @@ DATASEG
 
     ends gameObject
     
+    ;background db 48000 dup(0Bh)
+    ;           db 1600  dup(0Ah)
+    ;           db 14400 dup(06h)
+
     include "data.asm"
 
 CODESEG
@@ -54,6 +59,7 @@ CODESEG
         call setup_video_mode
         
         mov bl, 0bh
+        mov bh, 01h
         
         mov ax, 320
         push ax
@@ -68,7 +74,8 @@ CODESEG
         call draw_rectangle
         
         mov bl, 0ah
-        
+        mov bh, 01h
+
         mov ax, 320
         push ax
 
@@ -84,7 +91,8 @@ CODESEG
         call draw_rectangle
 
         mov bl, 06h
-        
+        mov bh, 01h
+
         mov ax, 320
         push ax
 
@@ -251,7 +259,7 @@ CODESEG
                 inc [currY]
                 inc [currX]
 
-                mov bl, 00h                
+                mov bh, 00h                              
                 call draw_rectangle
             
             ;when the coordinates are ok, we draw the model                               
@@ -335,7 +343,7 @@ CODESEG
         push [currY]
         push [currX]
 
-        mov bl, 00h                
+        mov bh, 00h                        
         call draw_rectangle
 
         mov bx, [currmodel]
