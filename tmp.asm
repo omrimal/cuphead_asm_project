@@ -165,9 +165,9 @@ CODESEG
             
     proc move_charecter
 
-        ;jump  
-        cmp al, 'w'
-        je jump
+        ;look up
+        ;cmp al, 'w'
+        ;je jump
                     
         ;move left
         cmp al, 'a'
@@ -177,8 +177,9 @@ CODESEG
         cmp al, 'd'
         je move_right
         
-        ;jump (spacebar) -> shoot 
-        cmp al, 32          
+        ;jump (spacebar)
+        cmp al, ' '
+        je jump          
         
         ;if neither of the keys above were pressed 
         cmp [deltax], 0 
@@ -258,7 +259,7 @@ CODESEG
                     
                 mov ax, [currX]       
                 mov dx, [currY]
-                lea bx, [currmodel]
+                mov bx, [currmodel]
                                     
                 call draw_model
 
