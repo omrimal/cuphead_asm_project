@@ -20,3 +20,21 @@ Managing the models in the game:
 	- initialize next to null (0)
 	- x & y positions will be initialized in the function above 
 	- length & width positions will be initialized in the function above 
+
+Drawing order:
+--------------
+	save a copy of the map without moving models such as:
+
+	- hp
+	- bosses
+	- player
+	- projectiles
+
+	when we move a model, we take a rectangle from the background first,
+	draw it at the old location, and then drawing the model at the new location.
+
+	the models draw order priority is (lowest to highest):
+	
+	1. bosses
+	2. player
+	3. projectiles
