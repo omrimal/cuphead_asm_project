@@ -28,7 +28,7 @@ proc get_background_pixel
         mov al, 06h
 
     got_color:
-    
+
         mov sp, bp
         pop bp
 
@@ -136,10 +136,6 @@ proc draw_rectangle
         mov dx, [bp - ROW_OFF]      ;updating the starting row
                     
         color_colum: 
-                    
-            mov cx, [bp - COL_OFF]
-            
-            int 10h
             
             cmp [byte ptr bp - MODE_OFF], 0
             jne same_color
@@ -150,6 +146,10 @@ proc draw_rectangle
             
             same_color:
 
+            mov cx, [bp - COL_OFF]
+            
+            int 10h
+            
             ;'advancing' to the next colum    
             inc [word ptr bp - COL_OFF]                                       
                                                         

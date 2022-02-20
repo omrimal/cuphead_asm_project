@@ -40,10 +40,6 @@ DATASEG
         topLeftY dw ?
 
     ends gameObject
-    
-    ;background db 48000 dup(0Bh)
-    ;           db 1600  dup(0Ah)
-    ;           db 14400 dup(06h)
 
     include "data.asm"
 
@@ -135,7 +131,7 @@ CODESEG
             ; Check if a key was pressed
             ;jz not_pressed 
             
-            mov [clock], 0
+            ;mov [clock], 0
 
             ; If a key was pressed, we can use its value    
             call move_charecter
@@ -203,11 +199,13 @@ CODESEG
             jmp draw_at_new_location
         
         move_left:
-            dec [currX]
+            ;dec [currX]
+            mov [deltax], -1
             jmp draw_at_new_location
             
         move_right:
-            inc [currX]
+            ;inc [currX]
+            mov [deltaX], 1
                 
         draw_at_new_location:
         
@@ -250,21 +248,21 @@ CODESEG
                 push 22
                 push 30
 
-                dec [currY]
-                dec [currX]
-                
                 push [currY]
                 push [currX]
-                
-                inc [currY]
-                inc [currX]
 
                 mov bh, 00h                              
                 call draw_rectangle
             
             ;when the coordinates are ok, we draw the model                               
             coordinates_are_ok:
-                    
+                
+                mov ax, [deltax]
+                add [currx], ax
+                
+                mov ax, [deltaY]
+                add [currY], ax
+
                 mov ax, [currX]       
                 mov dx, [currY]
                 mov bx, [currmodel]
@@ -286,8 +284,8 @@ CODESEG
         jne already_jumping
 
         ; initial jump delta
-        mov [deltaY], 0Dh
-        mov [jumpstep], 06h
+        mov [deltaY], -0Dh
+        mov [jumpstep], 05h
 
         already_jumping:
             ret
@@ -309,21 +307,18 @@ CODESEG
         mid_jump:
 
             ;jump hight
-            mov [deltaY], 0Dh
+            mov [deltaY], -0Dh
             mov ax, [deltay]
 
             cmp [jumpstep], 03h
             jbe in_way_down
 
-            ; each time dec by 10 px (going up)
-            sub [curry], ax
-            
             jmp dec_state
 
             in_way_down:
 
                 ; each time inc by 10 px (going down)
-                add [curry], ax
+                mov [deltaY], 0Dh
                 
             dec_state:
                 dec [jumpstep]
