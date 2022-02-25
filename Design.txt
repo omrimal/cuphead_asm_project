@@ -6,18 +6,21 @@ Managing the models in the game:
 
 - each model will have (each staruct essentially):
 
-	- bounding_box_len (integer)			--> 2 bytes \
-	- bounding_box_width (integer)			--> 2 bytes |\
-	- top_left_x_position (integer) 		--> 2 bytes	| \  12 bytes total
-	- top_left_y_position (integer)			--> 2 bytes	| /
-	- pixel_layout (ptr to a pixel array)	--> 2 bytes	|/
-	- pointer to the next object 			--> 2 bytes	/
+	- delta_x (word)							--> 2 bytes |\
+	- delta_y (word)							--> 2 bytes | \
+	- bounding_box_len (word)					--> 2 bytes |  \
+	- bounding_box_width (word)					--> 2 bytes |   \ 16 bytes total
+	- top_left_x_position (word) 				--> 2 bytes	|   /  
+	- top_left_y_position (word)				--> 2 bytes	|  /
+	- pixel_layout (word ptr to a pixel array)	--> 2 bytes	| /
+	- pointer to the next object (word ptr) 	--> 2 bytes	|/
 	
 - we will have a function that adds a node at the end:
 
-	- using the malloc function to allocate 12 bytes (the size of the struct)
-	- initialize the model pointer
+	- using the malloc function to allocate 16 bytes (the size of the struct)
+	- initialize delta x & y 	
 	- initialize next to null (0)
+	- initialize the model pointer
 	- x & y positions will be initialized in the function above 
 	- length & width positions will be initialized in the function above 
 
