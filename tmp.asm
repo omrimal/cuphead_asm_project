@@ -52,56 +52,11 @@ CODESEG
         mov ax, @data
         mov ds, ax
 
+        ; video mode
         call setup_video_mode
-        
-        mov bl, 0bh
-        mov bh, 01h
-        
-        mov ax, 320
-        push ax
 
-        mov ax, 96h
-        push ax
-
-        mov ax, 0h
-        push ax
-        push ax
-
-        call draw_rectangle
-        
-        mov bl, 0ah
-        mov bh, 01h
-
-        mov ax, 320
-        push ax
-
-        mov ax, 5h
-        push ax
-
-        mov ax, 96h
-        push ax
-
-        mov ax, 0h
-        push ax
-
-        call draw_rectangle
-
-        mov bl, 06h
-        mov bh, 01h
-
-        mov ax, 320
-        push ax
-
-        mov ax, 2dh
-        push ax
-
-        mov ax, 9bh
-        push ax
-
-        mov ax, 0h
-        push ax
-
-        call draw_rectangle
+        ; initializing background
+        call init_background
 
         mov ax, [currX]       
         mov dx, [currY]
@@ -156,14 +111,73 @@ CODESEG
 
     proc setup_video_mode
         
-        mov ah, 00h                     ;setting video mode
-        mov al, 13h                     ;to graphical mode 320x200 pixels
+        ; graphical mode 320x200 pixels
+        mov ah, 00h                     
+        mov al, 13h                     
         
-        int 10h                         ;executing
+        int 10h 
         
         ret
 
     endp setup_video_mode
+    
+    proc init_background
+        
+        ; sky rectangle - light cyan  
+        mov bl, 0bh
+        mov bh, 01h
+        
+        mov ax, 320
+        push ax
+
+        mov ax, 96h
+        push ax
+
+        mov ax, 0h
+        push ax
+        push ax
+
+        call draw_rectangle
+        
+        ; ground rectangle - light green
+        mov bl, 0ah
+        mov bh, 01h
+
+        mov ax, 320
+        push ax
+
+        mov ax, 5h
+        push ax
+
+        mov ax, 96h
+        push ax
+
+        mov ax, 0h
+        push ax
+
+        call draw_rectangle
+
+        ; underground rectangle - brown
+        mov bl, 06h
+        mov bh, 01h
+
+        mov ax, 320
+        push ax
+
+        mov ax, 2dh
+        push ax
+
+        mov ax, 9bh
+        push ax
+
+        mov ax, 0h
+        push ax
+
+        call draw_rectangle
+
+        ret 
+
+    endp init_background
 
     ;al - charecter pressed
             
@@ -220,7 +234,7 @@ CODESEG
             
             jmp delete_previos
                         
-            ;correcting coordinates in they're are out of bounds             
+            ;correcting coordinates in they're out of bounds             
             coordinate_out_of_bound:
                 Y_too_small:
                     inc [currY]
